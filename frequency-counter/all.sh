@@ -16,4 +16,6 @@ done
 
 wait
 
-echo "All instances have completed."
+echo "Analyzed all files."
+
+"$EXE" aggregate

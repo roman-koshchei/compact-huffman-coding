@@ -17,7 +17,11 @@ string command = args[0];
 args = args.Skip(1).ToArray();
 if (command == "analyze")
 {
-  AnalyzeCommand.Analyze(args);
+  AnalyzeCommand.Run(args);
+}
+else if (command == "aggregate")
+{
+  AggregateCommand.Run(args);
 }
 else
 {
@@ -35,12 +39,59 @@ public static class Helpers
     Console.WriteLine(msg);
     Console.ForegroundColor = tmp;
   }
+
+  private static readonly JsonSerializerOptions jsonSerializerOptions = new()
+  {
+    WriteIndented = true
+  };
+
+  public static void WriteDictToFile(Dictionary<string, long> dict, string jsonFilePath)
+  {
+    var sortedDictionary = dict
+        .OrderByDescending(kvp => kvp.Value)
+        .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+
+    string jsonString = JsonSerializer.Serialize(sortedDictionary, jsonSerializerOptions);
+
+    File.WriteAllText(jsonFilePath, jsonString);
+  }
+}
+
+public static class AggregateCommand
+{
+  public static void Run(string[] args)
+  {
+    string directory = args.ElementAtOrDefault(0) ?? "./results";
+    Helpers.PrintLn($"Aggregating files from: {directory}", ConsoleColor.Green);
+
+    Dictionary<string, long> globalDict = [];
+
+    var jsonFiles = Directory.GetFiles(directory, "*.json");
+    foreach (var jsonFile in jsonFiles)
+    {
+      var content = File.ReadAllText(jsonFile);
+      var fileDict = JsonSerializer.Deserialize<Dictionary<string, long>>(content)!;
+      foreach (var (key, value) in fileDict)
+      {
+        if (globalDict.TryGetValue(key, out var globalValue))
+        {
+          globalDict[key] = globalValue + value;
+        }
+        else
+        {
+          globalDict.Add(key, value);
+        }
+      }
+    }
+
+    Helpers.WriteDictToFile(globalDict, "../datasets/results/index.json");
+  }
 }
 
 
 public static class AnalyzeCommand
 {
-  public static void Analyze(string[] args)
+  public static void Run(string[] args)
   {
     if (args.Length != 1)
     {
@@ -109,16 +160,8 @@ public static class AnalyzeCommand
       dict.Remove("\r");
       dict.Remove("\r\n");
 
-      string jsonFilePath = $"./results/{Path.GetFileNameWithoutExtension(filePath)}.json";
-
-      var sortedDictionary = dict
-        .OrderByDescending(kvp => kvp.Value)
-        .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
-
-      var options = new JsonSerializerOptions { WriteIndented = true };
-      string jsonString = JsonSerializer.Serialize(sortedDictionary, options);
-
-      File.WriteAllText(jsonFilePath, jsonString);
+      string jsonFilePath = $"../datasets/results/{Path.GetFileNameWithoutExtension(filePath)}.json";
+      Helpers.WriteDictToFile(dict, jsonFilePath);
     }
     catch (FileNotFoundException)
     {
