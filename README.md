@@ -16,4 +16,20 @@ First of all I need to analyze plain english text data to figure out frequencies
 
 Datasets aren't placed inside of the repository, because of licensing and other legal stuff. I may create script to download all of these datasets.
 
+## Results
 
+In around half of the times, my encoding solution produces smaller results
+
+But unfortunately, average difference is only 4.2 units (which will be bits in real use scenario)
+
+Currently, I don't think it's a good tradeoff, because calculations for my encoding are more expensive
+
+```bash
+Using frequencies from: ../datasets/results/index.json
+Compact is smaller on average :)
+Compact is smaller 13300 times
+Compact is bigger 6693 times
+Difference: 6607 times
+Difference in size: 84816
+Difference in size on average: 4.242284799679888
+```
