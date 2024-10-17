@@ -23,6 +23,10 @@ else if (command == "aggregate")
 {
   AggregateCommand.Run(args);
 }
+else if (command == "wiki")
+{
+  WikiCommand.Run(args);
+}
 else
 {
   Helpers.PrintLn($"Command is not found: '{command}'", ConsoleColor.Red);
@@ -57,11 +61,37 @@ public static class Helpers
   }
 }
 
+public static class WikiCommand
+{
+  public static void Run(string[] args)
+  {
+    string directory = args.ElementAtOrDefault(0) ?? "../datasets/json/wiki";
+    Helpers.PrintLn($"Transforming wiki files from: {directory}", ConsoleColor.Green);
+
+    using var resultFile = File.OpenWrite("../datasets/txt/wiki.txt");
+
+    var jsonFiles = Directory.GetFiles(directory, "*.json");
+    foreach (var file in jsonFiles)
+    {
+      var content = File.ReadAllText(file);
+      using var doc = JsonDocument.Parse(content);
+      StringBuilder text = new();
+      foreach (var element in doc.RootElement.EnumerateArray())
+      {
+        text.Append(element.GetProperty("text").GetString() ?? "");
+      }
+      resultFile.Write(Encoding.UTF8.GetBytes(text.ToString()));
+
+      Helpers.PrintLn($"File {file} was processed", ConsoleColor.Green);
+    }
+  }
+}
+
 public static class AggregateCommand
 {
   public static void Run(string[] args)
   {
-    string directory = args.ElementAtOrDefault(0) ?? "./results";
+    string directory = args.ElementAtOrDefault(0) ?? "../datasets/results";
     Helpers.PrintLn($"Aggregating files from: {directory}", ConsoleColor.Green);
 
     Dictionary<string, long> globalDict = [];
