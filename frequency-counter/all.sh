@@ -11,7 +11,7 @@ FILES=(
 )
 
 for file in "${FILES[@]}"; do
-  "$EXE" "$file" &
+  "$EXE" analyze "$file" &
 done
 
 wait
